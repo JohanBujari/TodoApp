@@ -1,107 +1,86 @@
-import React, { useState } from "react";
+import React, {useState} from 'react';
 import logo from "./logo.svg";
 import "./App.css";
 
+
 function App() {
-  const [list, setList] = useState([
-    "Alice",
-    "Bob",
-    "Charlie",
-    "David",
-    "Eva",
-    "Frank",
-    "Grace",
-    "Helen",
-    "Isaac",
-    "Jack",
-  ]);
-  const [filterValues, setFilterValues] = useState([]);
-  const [input, setInput] = useState("");
-  const [selectedItems, setSelectedItems] = useState([]);
-
-  const handleFilterChange = (event) => {
-    const options = event.target.options;
-    const values = Array.from(options)
-      .filter((option) => option.selected)
-      .map((option) => option.value);
-    setFilterValues(values);
-  };
-
-  const handleInput = (event) => {
-    setInput(event.target.value);
-  };
-
-  const handleSelect = (event, item) => {
-    const isChecked = event.target.checked;
-    if (isChecked) {
-      setSelectedItems((prevSelected) => [...prevSelected, item]);
+  const [todos, setTodos] = useState([]);
+  const [newTodo, setNewTodo] = useState("");
+  const [editingTodoId, setEditingTodoId] = useState(null);
+  const handleAddTodo = () => {
+    if (newTodo.trim() !== "") {
+      setTodos([...todos, { id: Date.now(), text: newTodo, completed: false }]);
+      setNewTodo("");
     }
   };
-
-  const handleDeleteSelected = () => {
-    const updatedList = list.filter((item) => !selectedItems.includes(item));
-    setList(updatedList);
-    setSelectedItems([]);
+  const handleToggle = (id) => {
+    const updatedTodos = todos.map((todo) =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    );
+    setTodos(updatedTodos);
   };
-  
-  const filteredItems = () => {
-    return list
-      .filter((item) =>
-        filterValues.length === 0 ? item : filterValues.includes(item)
-      )
-      .filter((item) =>
-        input ? item.toLowerCase().includes(input.toLowerCase()) : item
-      );
+  const handleEdit = (id, newText) => {
+    const updatedTodos = todos.map((todo) =>
+      todo.id === id ? { ...todo, text: newText } : todo
+    );
+    setTodos(updatedTodos);
   };
-
-  const filteredList = filteredItems();
-
-  const onClick = () => {
-    setFilterValues([]);
-    setInput("");
+  const handleDelete = (id) => {
+    const updatedTodos = todos.filter((todo) => todo.id !== id);
+    setTodos(updatedTodos);
   };
-
   return (
-    <div className="app-container">
-      <h1 className="app-title">Filter and Search List</h1>
-      <div className="filter-container">
-        <select
-          multiple
-          onChange={handleFilterChange}
-          className="filter-select"
-        >
-          {list.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+    <div className="App">
+      <h1>Todo App</h1>
+      <div>
         <input
-          value={input}
-          onChange={handleInput}
-          className="filter-input"
-          placeholder="Search"
+          type="text"
+          value={newTodo}
+          onChange={(e) => setNewTodo(e.target.value)}
+          placeholder="Enter a new task"
         />
+        <button onClick={handleAddTodo}>Add</button>
       </div>
-      <ul className="item-list">
-        {selectedItems.length > 0 && (
-          <button onClick={handleDeleteSelected}>Delete Selected</button>
-        )}
-
-        {filteredList.map((item, index) => (
-          <li key={item} className="item">
-            <input
-              type="checkbox"
-              checked={selectedItems[index]}
-              onChange={(e) => handleSelect(e, item)}
-            />
-            {item}
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>
+            {!editingTodoId && (
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => handleToggle(todo.id)}
+              />
+            )}
+            {editingTodoId === todo.id ? (
+              <input
+                type="text"
+                value={todo.text}
+                onChange={(e) => handleEdit(todo.id, e.target.value)}
+                onBlur={() => setEditingTodoId(null)} // Done editing
+                autoFocus
+              />
+            ) : (
+              <span
+                style={{
+                  textDecoration: todo.completed ? "line-through" : "none",
+                }}
+              >
+                {todo.text}
+              </span>
+            )}
+            <button onClick={() => setEditingTodoId(todo.id)}>
+              {editingTodoId === todo.id
+                ? "Save"
+                : editingTodoId !== todo.id && !todo.completed
+                ? "Edit"
+                : null}
+            </button>
+            {editingTodoId !== todo.id && (
+              <button onClick={() => handleDelete(todo.id)}>Delete</button>
+            )}
           </li>
         ))}
       </ul>
-      {(filterValues.length > 0 || input.length > 0) && (
-        <button onClick={onClick}>Clear filters</button>
-      )}
     </div>
   );
 }
